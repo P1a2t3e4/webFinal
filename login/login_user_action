@@ -1,0 +1,53 @@
+<?php
+// Login_user_action.php
+session_start();
+include '../settings/connection.php';
+
+if (isset($_POST['login'])) {
+    // Fetch form data
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    // Perform login actions
+    $query = "SELECT * FROM Users WHERE Email = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user['PasswordHash'])) {
+            // Password is correct, set session variables or retrieve user info as needed
+            $user_id = $user['UserID'];
+            $user_type = $user['UserType'];
+            $registration_date = $user['RegistrationDate'];
+
+            // Now you have access to user information, you can use it as needed
+            // For example, you can set session variables or use the data directly in your application
+            // Example of setting session variables:
+            $_SESSION['user_id'] = $user_id;
+            $_SESSION['user_type'] = $user_type;
+            $_SESSION['registration_date'] = $registration_date;
+
+            // Redirect or perform other actions as needed
+            header("Location: dashboard.php");
+            exit();
+        } else {
+            // Incorrect password
+            $_SESSION['error'] = "Incorrect email or password.";
+            header("Location: login.php");
+            exit();
+        }
+    } else {
+        // User not found
+        $_SESSION['error'] = "User not found.";
+        header("Location: login.php");
+        exit();
+    }
+} else {
+    // Redirect to login page if login button was not clicked
+    header("Location: login.php");
+    exit();
+}
+?>
